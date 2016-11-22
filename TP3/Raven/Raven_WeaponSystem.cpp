@@ -57,6 +57,40 @@ void Raven_WeaponSystem::Initialize()
   m_WeaponMap[type_shotgun]         = 0;
   m_WeaponMap[type_rail_gun]        = 0;
   m_WeaponMap[type_rocket_launcher] = 0;
+
+
+  // Ajout des règles de fuzzification
+
+  // DIstance de la cible
+  FuzzyVariable& Distance = FuzzyAimModule.CreateFLV("Distance");
+  FzSet& TargetClose = Distance.AddLeftShoulderSet("TargetClose", 0, 25, 75);
+  FzSet& TargetMedium = Distance.AddTriangularSet("TargetMedium", 60, 105, 150);
+  FzSet& TargetFar = Distance.AddRightShoulderSet("TargetFar", 140, 325, 1000);
+
+  // Velocité de la cible
+  FuzzyVariable& Velocite = FuzzyAimModule.CreateFLV("Velocity");
+  FzSet& Slow = Velocite.AddLeftShoulderSet("Slow", 0, 0.1, 0.2);
+  FzSet& Normal = Velocite.AddTriangularSet("Normal", 0.1, 0.3, 0.5);
+  FzSet& Fast = Velocite.AddRightShoulderSet("Fast", 0.4, 0.8, 10);
+
+  // Deviation du tir
+  FuzzyVariable& Deviation = FuzzyAimModule.CreateFLV("Deviation");
+  FzSet& Small = Deviation.AddLeftShoulderSet("Small", 0, 0.1, 0.2);
+  FzSet& Medium = Deviation.AddTriangularSet("Medium", 0.15, 0.35, 0.5);
+  FzSet& Large = Deviation.AddRightShoulderSet("Large", 0.40, 0.45, 0.6);
+
+  // Trouver la déviation du tir final
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Slow), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Normal), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Fast), Medium);
+
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Slow), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Normal), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Fast), Large);
+
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Slow), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Normal), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Fast), Large);
 }
 
 //-------------------------------- SelectWeapon -------------------------------
@@ -173,7 +207,7 @@ void Raven_WeaponSystem::ChangeWeapon(unsigned int type)
 //  this method aims the bots current weapon at the target (if there is a
 //  target) and, if aimed correctly, fires a round
 //-----------------------------------------------------------------------------
-void Raven_WeaponSystem::TakeAimAndShoot()const
+void Raven_WeaponSystem::TakeAimAndShoot()
 {
   //aim the weapon only if the current target is shootable or if it has only
   //very recently gone out of view (this latter condition is to ensure the 
@@ -192,7 +226,8 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
     if (GetCurrentWeapon()->GetType() == type_rocket_launcher ||
         GetCurrentWeapon()->GetType() == type_blaster)
     {
-      AimingPos = PredictFuturePositionOfTarget();
+     
+		AimingPos = PredictFuturePositionOfTarget();
 
       //if the weapon is aimed correctly, there is line of sight between the
       //bot and the aiming position and it has been in view for a period longer
@@ -201,8 +236,9 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
            (m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible() >
             m_dReactionTime) &&
            m_pOwner->hasLOSto(AimingPos) )
-      {
-        AddNoiseToAim(AimingPos);
+	  {
+		Fuzzify(AimingPos);
+        //AddNoiseToAim(AimingPos);
 
         GetCurrentWeapon()->ShootAt(AimingPos);
       }
@@ -216,10 +252,11 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
       if ( m_pOwner->RotateFacingTowardPosition(AimingPos) &&
            (m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible() >
             m_dReactionTime) )
-      {
-        AddNoiseToAim(AimingPos);
+	  {
+		Fuzzify(AimingPos);
+        //AddNoiseToAim(AimingPos);
         
-        GetCurrentWeapon()->ShootAt(AimingPos);
+		GetCurrentWeapon()->ShootAt(AimingPos);
       }
     }
 
@@ -240,12 +277,36 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
 //-----------------------------------------------------------------------------
 void Raven_WeaponSystem::AddNoiseToAim(Vector2D& AimingPos)const
 {
-  Vector2D toPos = AimingPos - m_pOwner->Pos();
+	Vector2D toPos = AimingPos - m_pOwner->Pos();
 
-  Vec2DRotateAroundOrigin(toPos, RandInRange(-m_dAimAccuracy, m_dAimAccuracy));
+	Vec2DRotateAroundOrigin(toPos, RandInRange(-m_dAimAccuracy, m_dAimAccuracy));
 
-  AimingPos = toPos + m_pOwner->Pos();
+	AimingPos = toPos + m_pOwner->Pos();
 }
+
+//---------------------------- Fuzzify ----------------------------------
+//
+//  adds deviation to shot with fuzzy elements, replaces AddNoiseToAim
+//-----------------------------------------------------------------------------
+void Raven_WeaponSystem::Fuzzify(Vector2D& AimingPos)
+{
+	double Velocity = m_pOwner->GetTargetSys()->GetTarget()->Velocity().Length();
+
+	double DistanceTarget = Vec2DDistance(m_pOwner->Pos(), m_pOwner->GetTargetSys()->GetTarget()->Pos());
+
+	double TempsVision = m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible();
+
+	//TODO : Rajouter un 3eme fuzzy
+	FuzzyAimModule.Fuzzify("Velocity", Velocity);
+	FuzzyAimModule.Fuzzify("Distance", DistanceTarget);
+	double Deviation = FuzzyAimModule.DeFuzzify("Deviation", FuzzyModule::centroid);
+
+	Vector2D toPos = AimingPos - m_pOwner->Pos();
+
+	Vec2DRotateAroundOrigin(toPos, RandInRange(-Deviation, Deviation));
+	AimingPos = toPos + m_pOwner->Pos();
+}
+
 
 //-------------------------- PredictFuturePositionOfTarget --------------------
 //
