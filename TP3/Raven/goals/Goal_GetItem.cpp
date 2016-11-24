@@ -6,7 +6,8 @@
 #include "Messaging/Telegram.h"
 #include "..\Raven_Messages.h"
 
-#include "Goal_DodgeSideToSideToGetItem.h"
+#include "Goal_FollowDodge.h"
+#include "Goal_DodgeSideToSide.h"
 #include "Goal_SeekToPosition.h"
 #include "Goal_Wander.h"
 #include "Goal_FollowPath.h"
@@ -50,7 +51,8 @@ void Goal_GetItem::Activate()
 
   //the bot may have to wait a few update cycles before a path is calculated
   //so for appearances sake it just wanders
-  AddSubgoal(new Goal_DodgeSideToSideToGetItem(m_pOwner));
+  AddSubgoal(new Goal_Wander(m_pOwner));
+  
 
 }
 
@@ -79,7 +81,7 @@ bool Goal_GetItem::HandleMessage(const Telegram& msg)
 {
   //first, pass the message down the goal hierarchy
   bool bHandled = ForwardMessageToFrontMostSubgoal(msg);
-
+  Vector2D dummy;
   //if the msg was not handled, test to see if this goal can handle it
   if (bHandled == false)
   {
@@ -89,10 +91,10 @@ bool Goal_GetItem::HandleMessage(const Telegram& msg)
 
       //clear any existing goals
       RemoveAllSubgoals();
+	  AddSubgoal(new Goal_FollowDodge(m_pOwner,m_pOwner->GetPathPlanner()->GetPath()));
 
-      AddSubgoal(new Goal_FollowPath(m_pOwner,
-                                     m_pOwner->GetPathPlanner()->GetPath()));
-
+	  if (m_pOwner->canStepLeft(dummy) || m_pOwner->canStepRight(dummy))
+		  AddSubgoal(new Goal_DodgeSideToSide(m_pOwner));
       //get the pointer to the item
       m_pGiverTrigger = static_cast<Raven_Map::TriggerType*>(msg.ExtraInfo);
 
