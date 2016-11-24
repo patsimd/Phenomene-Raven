@@ -73,24 +73,50 @@ void Raven_WeaponSystem::Initialize()
   FzSet& Normal = Velocite.AddTriangularSet("Normal", 0.1, 0.3, 0.5);
   FzSet& Fast = Velocite.AddRightShoulderSet("Fast", 0.4, 0.8, 10);
 
+  // Temps de Vision
+  FuzzyVariable& TempsVision = FuzzyAimModule.CreateFLV("TempsVision");
+  FzSet& Short = TempsVision.AddLeftShoulderSet("Short", 0, 500, 1000);
+  FzSet& Average = TempsVision.AddTriangularSet("Average", 800, 1700, 2500);
+  FzSet& Long = TempsVision.AddRightShoulderSet("Long", 2300, 3000, 10000000);
+
+
   // Deviation du tir
   FuzzyVariable& Deviation = FuzzyAimModule.CreateFLV("Deviation");
   FzSet& Small = Deviation.AddLeftShoulderSet("Small", 0, 0.1, 0.2);
-  FzSet& Medium = Deviation.AddTriangularSet("Medium", 0.15, 0.35, 0.5);
-  FzSet& Large = Deviation.AddRightShoulderSet("Large", 0.40, 0.45, 0.6);
+  FzSet& Medium = Deviation.AddTriangularSet("Medium", 0.15, 0.25, 0.35);
+  FzSet& Large = Deviation.AddTriangularSet("Large", 0.30, 0.4, 0.45);
+  FzSet& VeryLarge = Deviation.AddRightShoulderSet("VeryLarge", 0.42, 0.5, 0.55);
 
   // Trouver la déviation du tir final
-  FuzzyAimModule.AddRule(FzAND(TargetClose, Slow), Small);
-  FuzzyAimModule.AddRule(FzAND(TargetClose, Normal), Small);
-  FuzzyAimModule.AddRule(FzAND(TargetClose, Fast), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Slow, Long), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Slow, Average), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Slow, Short), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Normal, Long), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Normal, Average), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Normal, Short), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Fast, Long), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Fast, Average), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetClose, Fast, Short), Large);
 
-  FuzzyAimModule.AddRule(FzAND(TargetMedium, Slow), Small);
-  FuzzyAimModule.AddRule(FzAND(TargetMedium, Normal), Medium);
-  FuzzyAimModule.AddRule(FzAND(TargetMedium, Fast), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Slow, Long), Small);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Slow, Average), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Slow, Short), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Normal, Long), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Normal, Average), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Normal, Short), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Fast, Long), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Fast, Average), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetMedium, Fast, Short), Large);
 
-  FuzzyAimModule.AddRule(FzAND(TargetFar, Slow), Medium);
-  FuzzyAimModule.AddRule(FzAND(TargetFar, Normal), Medium);
-  FuzzyAimModule.AddRule(FzAND(TargetFar, Fast), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Slow, Long), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Slow, Average), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Slow, Short), VeryLarge);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Normal, Long), Medium);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Normal, Average), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Normal, Short), VeryLarge);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Fast, Long), Large);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Fast, Average), VeryLarge);
+  FuzzyAimModule.AddRule(FzAND(TargetFar, Fast, Short), VeryLarge);
 }
 
 //-------------------------------- SelectWeapon -------------------------------
@@ -296,9 +322,10 @@ void Raven_WeaponSystem::Fuzzify(Vector2D& AimingPos)
 
 	double TempsVision = m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible();
 
-	//TODO : Rajouter un 3eme fuzzy
 	FuzzyAimModule.Fuzzify("Velocity", Velocity);
 	FuzzyAimModule.Fuzzify("Distance", DistanceTarget);
+	FuzzyAimModule.Fuzzify("TempsVision", TempsVision);
+
 	double Deviation = FuzzyAimModule.DeFuzzify("Deviation", FuzzyModule::centroid);
 
 	Vector2D toPos = AimingPos - m_pOwner->Pos();
