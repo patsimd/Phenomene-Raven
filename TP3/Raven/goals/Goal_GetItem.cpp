@@ -6,6 +6,8 @@
 #include "Messaging/Telegram.h"
 #include "..\Raven_Messages.h"
 
+#include "Goal_DodgeSideToSideToGetItem.h"
+#include "Goal_SeekToPosition.h"
 #include "Goal_Wander.h"
 #include "Goal_FollowPath.h"
 
@@ -48,7 +50,7 @@ void Goal_GetItem::Activate()
 
   //the bot may have to wait a few update cycles before a path is calculated
   //so for appearances sake it just wanders
-  AddSubgoal(new Goal_Wander(m_pOwner));
+  AddSubgoal(new Goal_DodgeSideToSideToGetItem(m_pOwner));
 
 }
 
