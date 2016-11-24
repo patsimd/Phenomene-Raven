@@ -13,6 +13,7 @@
 //-----------------------------------------------------------------------------
 #include <map>
 #include "2d/vector2d.h"
+#include "Fuzzy/FuzzyModule.h"
 
 class Raven_Bot;
 class Raven_Weapon;
@@ -53,6 +54,8 @@ private:
   //even if the target disappears from view.
   double            m_dAimPersistance;
 
+  FuzzyModule		FuzzyAimModule;
+
   //predicts where the target will be by the time it takes the current weapon's
   //projectile type to reach it. Used by TakeAimAndShoot
   Vector2D    PredictFuturePositionOfTarget()const;
@@ -61,6 +64,7 @@ private:
   //rads
   void        AddNoiseToAim(Vector2D& AimingPos)const;
 
+  void Fuzzify(Vector2D& AimingPos);
 public:
 
   Raven_WeaponSystem(Raven_Bot* owner,
@@ -76,7 +80,7 @@ public:
   //this method aims the bot's current weapon at the target (if there is a
   //target) and, if aimed correctly, fires a round. (Called each update-step
   //from Raven_Bot::Update)
-  void          TakeAimAndShoot()const;
+  void          TakeAimAndShoot();
 
   //this method determines the most appropriate weapon to use given the current
   //game state. (Called every n update-steps from Raven_Bot::Update)
