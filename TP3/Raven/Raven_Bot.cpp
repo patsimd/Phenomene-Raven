@@ -472,6 +472,11 @@ bool Raven_Bot::canStepBackward(Vector2D& PositionOfStep)const
   return canWalkTo(PositionOfStep);
 }
 
+void Raven_Bot::SetMyColor()
+{
+	gdi->BluePen();
+}
+
 //--------------------------- Render -------------------------------------
 //
 //------------------------------------------------------------------------
@@ -486,7 +491,7 @@ void Raven_Bot::Render()
 
   if (isDead() || isSpawning()) return;
   
-  gdi->BluePen();
+  SetMyColor();
   
   m_vecBotVBTrans = WorldTransform(m_vecBotVB,
                                    Pos(),

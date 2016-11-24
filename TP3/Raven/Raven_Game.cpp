@@ -16,6 +16,7 @@
 #include "messaging/MessageDispatcher.h"
 #include "Raven_Messages.h"
 #include "GraveMarkers.h"
+#include "Raven_Bot_Team.h"
 
 #include "armory/Raven_Projectile.h"
 #include "armory/Projectile_Rocket.h"
@@ -678,8 +679,53 @@ Raven_Game::GetPosOfClosestSwitch(Vector2D botPos, unsigned int doorID)const
   return closest;
 }
 
+void Raven_Game::ToggleTeams()
+{
+	if (!TeamsOn)
+	{
+		int NumBotsToAdd = 5;
+		while (NumBotsToAdd--)
+		{
+			//create a bot. (its position is irrelevant at this point because it will
+			//not be rendered until it is spawned)
+			Raven_Bot_Team* rb = new Raven_Bot_Team(this, Vector2D());
+
+			//switch the default steering behaviors on
+			rb->GetSteering()->WallAvoidanceOn();
+			rb->GetSteering()->SeparationOn();
+
+			m_Bots.push_back(rb);
+
+			//register the bot with the entity manager
+			EntityMgr->RegisterEntity(rb);
 
 
+			#ifdef LOG_CREATIONAL_STUFF
+					debug_con << "Adding a team-bot with ID " << ttos(rb->ID()) << "";
+			#endif
+		}
+	}
+	else
+	{
+		if (!m_Bots.empty())
+		{
+			std::list<Raven_Bot*>::iterator ptr;
+			for (ptr = m_Bots.begin(); ptr != m_Bots.end(); ptr++)
+			{
+				Raven_Bot* pBot = *ptr;
+				if (Raven_Bot_Team* tBot = dynamic_cast<Raven_Bot_Team*>(pBot))
+				{
+					if (pBot == m_pSelectedBot)
+						m_pSelectedBot = 0;
+					NotifyAllBotsOfRemoval(pBot);
+					ptr--;
+					m_Bots.remove(pBot);
+				}
+			}
+		}
+	}
+	TeamsOn = !TeamsOn;
+}
 
     
 //--------------------------- Render ------------------------------------------

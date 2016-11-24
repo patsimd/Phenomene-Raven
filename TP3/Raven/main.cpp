@@ -132,6 +132,9 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
 
            break;
 
+		 case 'T':
+			 g_pRaven->ToggleTeams();
+
          case '1':
 
            g_pRaven->ChangeWeaponOfPossessedBot(type_blaster);
@@ -230,7 +233,9 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
 
           break;
 
-
+	  case IDM_GAME_TEAMS:
+		  g_pRaven->ToggleTeams();
+		  break;
 
       case IDM_NAVIGATION_SHOW_NAVGRAPH:
 

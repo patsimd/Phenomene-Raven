@@ -37,6 +37,7 @@ class GraveMarkers;
 class Raven_Game
 {
 private:
+	bool TeamsOn = false;
 
   //the current game map
   Raven_Map*                       m_pMap;
@@ -133,7 +134,8 @@ public:
 
 
   void        TogglePause(){m_bPaused = !m_bPaused;}
-  
+  void		  ToggleTeams();
+
   //this method is called when the user clicks the right mouse button.
   //The method checks to see if a bot is beneath the cursor. If so, the bot
   //is recorded as selected.If the cursor is not over a bot then any selected
