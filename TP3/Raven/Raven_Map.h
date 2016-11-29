@@ -101,6 +101,8 @@ public:
   //used by objects such as doors to add walls to the environment)
   Wall2D* AddWall(Vector2D from, Vector2D to);
 
+  void AddWeapon(int type_of_weapon, Vector2D pos);
+
   void    AddSoundTrigger(Raven_Bot* pSoundSource, double range);
 
   double   CalculateCostToTravelBetweenNodes(int nd1, int nd2)const;

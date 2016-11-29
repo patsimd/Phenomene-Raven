@@ -335,6 +335,7 @@ void Raven_Bot::ReduceHealth(unsigned int val)
 
   if (m_iHealth <= 0)
   {
+	
     SetDead();
   }
 

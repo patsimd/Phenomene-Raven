@@ -17,6 +17,17 @@ Raven_TargetingSystem::Raven_TargetingSystem(Raven_Bot* owner):m_pOwner(owner),
 //-----------------------------------------------------------------------------
 void Raven_TargetingSystem::Update()
 {
+
+	//fetch leader's target if it exists
+	if (m_pOwner->GetLeader() != nullptr){
+		if (m_pOwner->GetTargetSys()->GetTarget() != 0)
+		{
+			m_pCurrentTarget = m_pOwner->GetTargetSys()->GetTarget();
+			return;
+		}
+	}
+
+
   double ClosestDistSoFar = MaxDouble;
   m_pCurrentTarget       = 0;
 
@@ -30,13 +41,17 @@ void Raven_TargetingSystem::Update()
     //make sure the bot is alive and that it is not the owner
     if ((*curBot)->isAlive() && (*curBot != m_pOwner) )
     {
-      double dist = Vec2DDistanceSq((*curBot)->Pos(), m_pOwner->Pos());
+	  // Check for teams
+		if (! ((*curBot)->getTeam() && m_pOwner->getTeam()))
+		{
+		  double dist = Vec2DDistanceSq((*curBot)->Pos(), m_pOwner->Pos());
 
-      if (dist < ClosestDistSoFar)
-      {
-        ClosestDistSoFar = dist;
-        m_pCurrentTarget = *curBot;
-      }
+		  if (dist < ClosestDistSoFar)
+		  {
+			ClosestDistSoFar = dist;
+			m_pCurrentTarget = *curBot;
+		  }
+		}
     }
   }
 }

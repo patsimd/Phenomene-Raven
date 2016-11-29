@@ -35,7 +35,12 @@ void Goal_Explore::Activate()
   //the bot may have to wait a few update cycles before a path is calculated
   //so for appearances sake it simple ARRIVES at the destination until a path
   //has been found
-  AddSubgoal(new Goal_SeekToPosition(m_pOwner, m_CurrentDestination));
+  if (m_pOwner->GetLeader() != nullptr){
+	  AddSubgoal(new Goal_SeekToPosition(m_pOwner, m_pOwner->GetLeader()->Pos()));
+  }
+  else{
+	  AddSubgoal(new Goal_SeekToPosition(m_pOwner, m_CurrentDestination));
+  }
 }
 
 //------------------------------ Process -------------------------------------

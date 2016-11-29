@@ -683,12 +683,24 @@ void Raven_Game::ToggleTeams()
 {
 	if (!TeamsOn)
 	{
-		int NumBotsToAdd = 5;
+		Raven_Bot_Team* leader = new Raven_Bot_Team(this, Vector2D());
+		leader->SetMaxHealth(200);
+		//switch the default steering behaviors on
+		leader->GetSteering()->WallAvoidanceOn();
+		leader->GetSteering()->SeparationOn();
+
+		m_Bots.push_back(leader);
+
+		//register the bot with the entity manager
+		EntityMgr->RegisterEntity(leader);
+
+		int NumBotsToAdd = 4;
 		while (NumBotsToAdd--)
 		{
 			//create a bot. (its position is irrelevant at this point because it will
 			//not be rendered until it is spawned)
-			Raven_Bot_Team* rb = new Raven_Bot_Team(this, Vector2D());
+
+			Raven_Bot_Team* rb = new Raven_Bot_Team(this, Vector2D(), leader);
 
 			//switch the default steering behaviors on
 			rb->GetSteering()->WallAvoidanceOn();

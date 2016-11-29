@@ -37,7 +37,12 @@ void Goal_HuntTarget::Activate()
     //else move to the LRP
     else
     {
-      AddSubgoal(new Goal_MoveToPosition(m_pOwner, lrp));
+		if (m_pOwner->GetLeader() != nullptr){
+			AddSubgoal(new Goal_MoveToPosition(m_pOwner, m_pOwner->GetLeader()->Pos()));
+		}
+		else{
+			AddSubgoal(new Goal_MoveToPosition(m_pOwner, lrp));
+		}
     }
   }
 

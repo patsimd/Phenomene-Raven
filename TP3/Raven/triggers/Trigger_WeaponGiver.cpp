@@ -11,7 +11,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 Trigger_WeaponGiver::Trigger_WeaponGiver(std::ifstream& datafile):
-      
           Trigger_Respawning<Raven_Bot>(GetValueFromStream<int>(datafile))
 {
   Read(datafile);

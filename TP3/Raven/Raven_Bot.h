@@ -34,11 +34,11 @@ class Raven_SensoryMemory;
 
 class Raven_Bot : public MovingEntity
 {
-private:
+protected:
 
   enum Status{alive, dead, spawning};
 
-private:
+protected:
 
   //alive, dead or spawning?
   Status                             m_Status;
@@ -158,7 +158,7 @@ public:
   bool          isSpawning()const{return m_Status == spawning;}
   
   void          SetSpawning(){m_Status = spawning;}
-  void          SetDead(){m_Status = dead;}
+  virtual void          SetDead(){m_Status = dead;}
   void          SetAlive(){m_Status = alive;}
 
   //returns a value indicating the time in seconds it will take the bot
@@ -204,13 +204,16 @@ public:
   Raven_Steering* const              GetSteering(){return m_pSteering;}
   Raven_PathPlanner* const           GetPathPlanner(){return m_pPathPlanner;}
   Goal_Think* const                  GetBrain(){return m_pBrain;}
-  const Raven_TargetingSystem* const GetTargetSys()const{return m_pTargSys;}
-  Raven_TargetingSystem* const       GetTargetSys(){return m_pTargSys;}
+  virtual const Raven_TargetingSystem* const GetTargetSys()const{return m_pTargSys;}
+  virtual Raven_TargetingSystem* const       GetTargetSys(){return m_pTargSys;}
   Raven_Bot* const                   GetTargetBot()const{return m_pTargSys->GetTarget();}
   Raven_WeaponSystem* const          GetWeaponSys()const{return m_pWeaponSys;}
   Raven_SensoryMemory* const         GetSensoryMem()const{return m_pSensoryMem;}
 
   virtual void SetMyColor();
+  virtual Raven_Bot* GetLeader(){ return nullptr;};
+  virtual bool getTeam() const { return false; }
+  void SetMaxHealth(int maxHealth){ m_iMaxHealth = maxHealth; RestoreHealthToMaximum(); }
 };
 
 
