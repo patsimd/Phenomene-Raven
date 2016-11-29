@@ -14,9 +14,11 @@ private:
 
   //the edge the bot will follow
   PathEdge  m_Edge;
-
+  float timer;
+  float maxTime;
   //true if m_Edge is the last in the path.
   bool      m_bLastEdgeInPath;
+  bool		m_deviant;
 
   //the estimated time the bot should take to traverse the edge
   double     m_dTimeExpected;

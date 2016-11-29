@@ -33,7 +33,8 @@ Goal_TraverseEdge::Goal_TraverseEdge(Raven_Bot* pBot,
 void Goal_TraverseEdge::Activate()
 {
   m_iStatus = active;
-  
+  m_deviant = false;
+  maxTime = Clock->GetTickCount() + 0.5;
   //the edge behavior flag may specify a type of movement that necessitates a 
   //change in the bot's max possible speed as it follows this edge
   switch(m_Edge.Behavior())
@@ -62,13 +63,54 @@ void Goal_TraverseEdge::Activate()
   m_dTimeExpected = m_pOwner->CalculateTimeToReachPosition(m_Edge.Destination());
   
   //factor in a margin of error for any reactive behavior
-  static const double MarginOfError = 2.0;
+  static const double MarginOfError = 15.0;
 
   m_dTimeExpected += MarginOfError;
 
+  bool static m_bClockwise = true;
+  Vector2D m_vStrafeTarget;
+  if (!m_deviant){
+	
+	  if (m_bClockwise)
+	  {
+		  if (m_pOwner->canStepRight(m_vStrafeTarget))
+		  {
+			  m_pOwner->GetSteering()->SetTarget(m_vStrafeTarget - m_pOwner->Pos() + m_Edge.Destination());
+			  m_deviant = true;
+		  }
+		  else
+		  {
+			  m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
+			  //debug_con << "changing" << "";
+			  m_bClockwise = !m_bClockwise;
+			  m_iStatus = inactive;
+		  }
+	  }
+
+	  else
+	  {
+		  if (m_pOwner->canStepLeft(m_vStrafeTarget))
+		  {
+			  m_pOwner->GetSteering()->SetTarget(m_vStrafeTarget - m_pOwner->Pos() + m_Edge.Destination());
+			  m_deviant = true;
+		  }
+		  else
+		  {
+			  m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
+			  // debug_con << "changing" << "";
+			  m_bClockwise = !m_bClockwise;
+			  m_iStatus = inactive;
+		  }
+	  }
+  }
+  else
+  {
+	  m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
+  }
+
 
   //set the steering target
-  m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
+ // m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
 
   //Set the appropriate steering behavior. If this is the last edge in the path
   //the bot should arrive at the position it points to, else it should seek
@@ -91,11 +133,15 @@ int Goal_TraverseEdge::Process()
 {
   //if status is inactive, call Activate()
   ActivateIfInactive();
+  if (maxTime < Clock->GetTickCount())
+  {
+	  m_pOwner->GetSteering()->SetTarget(m_Edge.Destination());
+  }
   
   //if the bot has become stuck return failure
   if (isStuck())
   {
-    m_iStatus = failed;
+  //  m_iStatus = failed;
   }
   
   //if the bot has reached the end of the edge return completed
